@@ -85,7 +85,7 @@ void bruite(sil::Image &image)
     }
 }
 
-void diagonale(sil::Image &image)
+sil::Image diagonale(sil::Image &image)
 {
     sil::Image new_pouet{image.height(), image.width()};
     for (int x{0}; x < image.width(); x++)
@@ -101,23 +101,13 @@ void diagonale(sil::Image &image)
         }
     }
     image = new_pouet;
+    return image;
 }
 
 void rotation(sil::Image &image)
 {
-    sil::Image new_pouet{image.height(), image.width()};
-    for (int x{0}; x < image.width(); x++)
-    {
-        for (int y{0}; y < image.height(); y++)
-        {
-            float tempg = image.pixel(x, y).g;
-            float tempr = image.pixel(x, y).r;
-            float tempb = image.pixel(x, y).b;
-            new_pouet.pixel(y, x).r = tempr;
-            new_pouet.pixel(y, x).g = tempg;
-            new_pouet.pixel(y, x).b = tempb;
-        }
-    }
+    sil::Image new_pouet=diagonale(image);
+    
     mirroir(new_pouet);
     image = new_pouet;
 }
@@ -431,7 +421,7 @@ void multiclone(sil::Image &image)
                 {
                     for (int k = 0; k < clone.height(); k++)
                     {
-                        if (brightness(clone.pixel(j,k))>0.01)
+                        if (brightness(clone.pixel(j, k)) > 0.01)
                         {
                             image.pixel(x + j, y + k) = clone.pixel(j, k);
                         }
@@ -442,174 +432,195 @@ void multiclone(sil::Image &image)
     }
 }
 
-void histogramme(sil::Image &image){
-    int xsombre=0;
-    int ysombre=0;
-    int xclaire=0;
-    int yclaire=0;
-    for (int x =0;x<image.width();x++){
-        for(int y=0;y<image.height();y++){
-            if (brightness(image.pixel(x,y))<brightness(image.pixel(xsombre,ysombre))){
-                xsombre=x;
-                ysombre=y;
+void histogramme(sil::Image &image)
+{
+    int xsombre = 0;
+    int ysombre = 0;
+    int xclaire = 0;
+    int yclaire = 0;
+    for (int x = 0; x < image.width(); x++)
+    {
+        for (int y = 0; y < image.height(); y++)
+        {
+            if (brightness(image.pixel(x, y)) < brightness(image.pixel(xsombre, ysombre)))
+            {
+                xsombre = x;
+                ysombre = y;
             }
-            if (brightness(image.pixel(x,y))>brightness(image.pixel(xclaire,yclaire))){
-                xclaire=x;
-                yclaire=y;
+            if (brightness(image.pixel(x, y)) > brightness(image.pixel(xclaire, yclaire)))
+            {
+                xclaire = x;
+                yclaire = y;
             }
         }
     }
-    float ecart=glm::distance(brightness(image.pixel(xclaire,yclaire)), brightness(image.pixel(xsombre,ysombre)));
-    float temp=(brightness(image.pixel(xclaire,yclaire))/ecart)-1;
-    for (int x =0;x<image.width();x++){
-        for(int y=0;y<image.height();y++){
-            image.pixel(x,y)=(image.pixel(x,y))/ecart-temp;
+    float ecart = glm::distance(brightness(image.pixel(xclaire, yclaire)), brightness(image.pixel(xsombre, ysombre)));
+    float temp = (brightness(image.pixel(xclaire, yclaire)) / ecart) - 1;
+    for (int x = 0; x < image.width(); x++)
+    {
+        for (int y = 0; y < image.height(); y++)
+        {
+            image.pixel(x, y) = (image.pixel(x, y)) / ecart - temp;
         }
     }
 }
 
-glm::vec3 flou(sil::Image &image,int x,int y,int t){
-    int mid=t/2;
-    int nbpix=1;
-    glm::vec3 temp=image.pixel(x,y);
-    for(int i=0;i<=mid;i++){
-        for (int j=0;j<=mid;j++){
-            if(x-i>0){
-                if(y-j>0){
-                    nbpix+=1;
-                    temp=temp+image.pixel(x-i,y-j);
+glm::vec3 flou(sil::Image &image, int x, int y, int t)
+{
+    int mid = t / 2;
+    int nbpix = 1;
+    glm::vec3 temp = image.pixel(x, y);
+    for (int i = 0; i <= mid; i++)
+    {
+        for (int j = 0; j <= mid; j++)
+        {
+            if (x - i > 0)
+            {
+                if (y - j > 0)
+                {
+                    nbpix += 1;
+                    temp = temp + image.pixel(x - i, y - j);
                 }
-                if(y+j<image.height()){
-                    nbpix+=1;
-                    temp=temp+image.pixel(x-i,y+j);
+                if (y + j < image.height())
+                {
+                    nbpix += 1;
+                    temp = temp + image.pixel(x - i, y + j);
                 }
-                nbpix+=1;
-                temp=temp+image.pixel(x-i,y);
+                nbpix += 1;
+                temp = temp + image.pixel(x - i, y);
             }
-            if(x+i<image.width()){
-                if(y-j>0){
-                    nbpix+=1;
-                    temp=temp+image.pixel(x+i,y-j);
+            if (x + i < image.width())
+            {
+                if (y - j > 0)
+                {
+                    nbpix += 1;
+                    temp = temp + image.pixel(x + i, y - j);
                 }
-                if(y+j<image.height()){
-                    nbpix+=1;
-                    temp=temp+image.pixel(x+i,y+j);
+                if (y + j < image.height())
+                {
+                    nbpix += 1;
+                    temp = temp + image.pixel(x + i, y + j);
                 }
-                nbpix+=1;
-                temp=temp+image.pixel(x+i,y);
+                nbpix += 1;
+                temp = temp + image.pixel(x + i, y);
             }
-            if(y-j>0){
-                nbpix+=1;
-                temp=temp+image.pixel(x,y-j);
+            if (y - j > 0)
+            {
+                nbpix += 1;
+                temp = temp + image.pixel(x, y - j);
             }
-            if(y+j<image.height()){
-                nbpix+=1;
-                temp=temp+image.pixel(x,y+j);
+            if (y + j < image.height())
+            {
+                nbpix += 1;
+                temp = temp + image.pixel(x, y + j);
             }
         }
     }
-    glm::vec3 result=glm::vec3{temp.r/nbpix,temp.g/nbpix,temp.b/nbpix};
+    glm::vec3 result = glm::vec3{temp.r / nbpix, temp.g / nbpix, temp.b / nbpix};
     return result;
 }
 
-void convolution(sil::Image &image){
-    sil::Image newimage{image.width(),image.height()};
-    for(int x=0;x<image.width();x++){
-        for(int y=0;y<image.height();y++){
-            glm::vec3 val= flou (image,x,y,25);
-            newimage.pixel(x,y)=val;
+void convolution(sil::Image &image)
+{
+    sil::Image newimage{image.width(), image.height()};
+    for (int x = 0; x < image.width(); x++)
+    {
+        for (int y = 0; y < image.height(); y++)
+        {
+            glm::vec3 val = flou(image, x, y, 25);
+            newimage.pixel(x, y) = val;
         }
     }
-    image=newimage;
+    image = newimage;
 }
 
 int main()
 {
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // keep_green_only(image);
-    // image.save("output/pouetvert.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // swap(image);
-    // image.save("output/pouetswap.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // black_and_white(image);
-    // image.save("output/pouet1967.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // negatif(image);
-    // image.save("output/deprepouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // mirroir(image);
-    // image.save("output/teuop.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // diagonale(image);
-    // image.save("output/diagopouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // bruite(image);
-    // image.save("output/pouetneige.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // rotation(image);
-    // image.save("output/cotepouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // rgb(image);
-    // image.save("output/tripouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // dark(image);
-    // image.save("output/darkpouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // light(image);
-    // image.save("output/flashpouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // disque(image);
-    // image.save("output/thatsallpouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // cercle(image);
-    // image.save("output/snipepouet.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // glitch(image);
-    // image.save("output/pôuét.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // mosaique(image);
-    // image.save("output/pouetpouetarmy.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // mosaiquemirroir(image);
-    // image.save("output/pouetteuoparmy.png");
-    //}
-    //{
-    // sil::Image image{"images/moymoy cat.jpg"};
-    // tri(image);
-    // image.save("output/pouetpuree.png");
-    //}
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        keep_green_only(image);
+        image.save("output/pouetvert.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        swap(image);
+        image.save("output/pouetswap.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        black_and_white(image);
+        image.save("output/pouet1967.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        negatif(image);
+        image.save("output/deprepouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        mirroir(image);
+        image.save("output/teuop.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        diagonale(image);
+        image.save("output/diagopouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        bruite(image);
+        image.save("output/pouetneige.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        rotation(image);
+        image.save("output/cotepouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        rgb(image);
+        image.save("output/tripouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        dark(image);
+        image.save("output/darkpouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        light(image);
+        image.save("output/flashpouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        disque(image);
+        image.save("output/thatsallpouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        cercle(image);
+        image.save("output/snipepouet.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        glitch(image);
+        image.save("output/pôuét.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        mosaique(image);
+        image.save("output/pouetpouetarmy.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        mosaiquemirroir(image);
+        image.save("output/pouetteuoparmy.png");
+    }
+    {
+        sil::Image image{"images/moymoy cat.jpg"};
+        tri(image);
+        image.save("output/pouetpuree.png");
+    }
     {
         sil::Image image{"images/moymoy cat.jpg"};
         degrade(image);
